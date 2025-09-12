@@ -1,25 +1,5 @@
 import { useState, useMemo, useCallback } from "react";
-
-/**
- * @interface ProductItem
- * @description Mewakili struktur satu item produk.
- * @property {number} id - Pengidentifikasi unik untuk produk.
- * @property {string} category - Kategori produk.
- * @property {string} price - Harga produk dalam bentuk string (misalnya, "300K", "Gratis").
- * @property {string} duration - Durasi produk dalam bentuk string (misalnya, "8 jam").
- * @property {string} texttitle - Judul produk untuk pencarian.
- * @property {string} ratingdesc - Deskripsi rating untuk pengurutan.
- * @property {unknown} [key: string] - Memungkinkan properti lain yang tidak terduga.
- */
-export interface ProductItem {
-  id: number;
-  category: string;
-  price: string;
-  duration: string;
-  texttitle: string;
-  ratingdesc: string;
-  [key: string]: unknown;
-}
+import type { Product } from "../services/types/product";
 
 /**
  * @typedef FilterState
@@ -71,7 +51,7 @@ const getDurationInHours = (duration: string): number => {
  * @param {string} price - String harga.
  * @returns {string} Kategori harga yang sesuai.
  */
-const getPriceCategory = (price: string): string => {
+const getPriceCategory = (price: string | number) => {
   const value = getPriceValue(price);
   if (value === 0) return "Gratis";
   if (value <= 300000) return "Murah";
@@ -91,20 +71,7 @@ const getDurationCategory = (duration: string): string => {
   return "LebihDari8jam";
 };
 
-/**
- * Hook kustom React untuk mengelola logika pemfilteran produk.
- * Hook ini merangkum state untuk filter aktif dan menyediakan fungsi untuk memanipulasinya.
- * Logika pemfilteran di-memoize untuk meningkatkan performa.
- *
- * @param {ProductItem[]} data - Array data produk asli yang akan difilter.
- * @returns {{
- *   filteredData: ProductItem[],
- *   toggleFilter: (filterType: keyof FilterState, value: string) => void,
- *   resetFilters: () => void,
- *   activeFilters: FilterState
- * }} Objek yang berisi data yang telah difilter dan fungsi untuk mengelola filter.
- */
-export const useProductFilter = (data: ProductItem[]) => {
+export const useProductFilter = (data: Product[]) => {
   /**
    * State untuk menyimpan filter yang sedang aktif untuk setiap kategori.
    */

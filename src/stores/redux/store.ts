@@ -1,13 +1,13 @@
-import toolkit from "@reduxjs/toolkit";
+import { configureStore } from "@reduxjs/toolkit";
+import userReducer from "./slices/userSlice";
+import productReducer from "./slices/productSlice";
 
-const { configureStore, createAction, createReducer } = toolkit;
-
-const initialState = {
-  user: [],
-};
-
-const userReducer = createReducer(initialState, (builder) => {
-  builder.addCase(createAction("user/fetchUser"), (state, action) => {
-    state.user = action.payload;
-  });
+export const store = configureStore({
+  reducer: {
+    user: userReducer,
+    product: productReducer,
+  },
 });
+
+export type RootState = ReturnType<typeof store.getState>;
+export type AppDispatch = typeof store.dispatch;

@@ -5,11 +5,23 @@ import MyProfileForm from "../Elements/MyProfile/myprofileform";
 import Button from "../Elements/Button";
 import CountryCode from "../Elements/MyProfile/countrycode";
 import { useEffect } from "react";
-import { useProfileStore } from "../../stores/useProfileStore";
+import {
+  fetchUser,
+  deleteUserAccount,
+  setProfileField,
+  updateUserProfile,
+} from "../../stores/redux/slices/userSlice";
+import { useDispatch, useSelector } from "react-redux";
+import type { RootState, AppDispatch } from "../../stores/redux/store";
 
 const Profile = () => {
-  const { profile, fetchProfile, updateProfile, deleteProfile, setProfile } =
-    useProfileStore();
+  const dispatch = useDispatch<AppDispatch>();
+  const {
+    items: user,
+    error,
+    status,
+  } = useSelector((state: RootState) => state.user);
+
   const localSorageId = localStorage.getItem("user");
   const id = localSorageId ? JSON.parse(localSorageId).id : "";
 
@@ -21,30 +33,38 @@ const Profile = () => {
       console.log("ID Tidak Ditemukan");
       return;
     }
-    
-    fetchProfile(id);
+
+    if (status === "idle") {
+      dispatch(fetchUser(id));
+    }
+
     console.log("ID User:", id);
-  }, [fetchProfile, id]);
+  }, [status, id, dispatch]);
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) =>
-    setProfile(event.target.name, event.target.value);
+    dispatch(
+      setProfileField({ field: event.target.name, value: event.target.value })
+    );
 
   const handleCountryCodeChange = (
     event: React.ChangeEvent<HTMLSelectElement>
-  ) => setProfile("countryCode", event.target.value);
+  ) =>
+    dispatch(
+      setProfileField({ field: "countryCode", value: event.target.value })
+    );
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (profile) {
-      updateProfile(id);
-    }
+    dispatch(updateUserProfile(id));
   };
 
   const handleDeleteAccount = () => {
-    if (profile) {
-      deleteProfile(id);
-    }
+    if (window.confirm("Apakah anda yakin ingin menghapus akun?"))
+      dispatch(deleteUserAccount(id));
   };
+
+  if (status === "loading") return <div>Loading...</div>;
+  if (status === "failed") return <div>Error: {error}</div>;
 
   return (
     <main className="px-5 py-7 gap-6 flex flex-col md:flex-row md:px-30 md:py-16 md:gap-9 md:justify-center">
@@ -79,8 +99,8 @@ const Profile = () => {
         <MyProfile
           imgSrc="/myprofile.png"
           imgAlt="profile"
-          name={profile?.name ?? ""}
-          email={profile?.email ?? ""}
+          name={user[0].name ?? ""}
+          email={user[0].email ?? ""}
           button="Ganti Foto Profil"
         />
 
@@ -88,34 +108,34 @@ const Profile = () => {
           <MyProfileForm
             label="Nama Lengkap"
             name="name"
-            value={profile?.name ?? ""}
+            value={user[0].name ?? ""}
             onChange={handleInputChange}
           />
           <MyProfileForm
             label="E-Mail"
             name="email"
             type="email"
-            value={profile?.email ?? ""}
+            value={user[0].email ?? ""}
             onChange={handleInputChange}
           />
           <MyProfileForm
             label="Password"
             name="password"
             type="password"
-            value={profile?.password ?? ""}
+            value={user[0].password ?? ""}
             onChange={handleInputChange}
           />
         </div>
         <div className="flex flex-col gap-4 md:flex-row">
           <CountryCode
-            countryCode={profile?.countryCode ?? ""}
+            countryCode={user[0].countryCode ?? ""}
             onChange={handleCountryCodeChange}
           />
           <MyProfileForm
             label=""
             name="phone"
             type="tel"
-            value={profile?.phone ?? Number(0)}
+            value={user[0].phone ?? Number(0)}
             onChange={handleInputChange}
           />
         </div>

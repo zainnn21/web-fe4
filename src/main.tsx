@@ -2,7 +2,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { RouterProvider } from "react-router-dom";
 import { Provider } from "react-redux";
-import store from "./stores/redux/store";
+import { store } from "./stores/redux/store";
 import router from "./routes/router"; // Impor router dari file terpisah
 
 // Mencari elemen HTML di `index.html` yang memiliki id="root".

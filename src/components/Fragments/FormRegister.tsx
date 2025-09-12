@@ -5,11 +5,50 @@ import FormTitle from "../Elements/TitleForm";
 import OptionGender from "../Elements/OptionGender/Index";
 import { Link, useNavigate } from "react-router-dom";
 import NoHp from "../Elements/NoHp/index";
-import { useRegister } from "../../hooks/useRegister";
+import { useDispatch, useSelector } from "react-redux";
+import type { AppDispatch, RootState } from "../../stores/redux/store";
+import { registerNewUser } from "../../stores/redux/slices/userSlice";
+import StatusLoading from "../Elements/status/statusLoading";
 
 const FormRegister = () => {
   const navigate = useNavigate();
-  const handleSubmit = useRegister();
+  const dispatch = useDispatch<AppDispatch>();
+  const { status } = useSelector((state: RootState) => state.user);
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const target = event.currentTarget;
+
+    const inputUser = {
+      name: target.namalenkap.value,
+      email: target.email.value,
+      gender: target.gender.value,
+      phone: target.phone.value,
+      password: target.password.value,
+      konfirmasiPassword: target.konfirmasipassword.value,
+      countryCode: target.countryCode.value,
+      id: Math.random().toString(36),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    console.log(inputUser);
+
+    dispatch(registerNewUser(inputUser))
+      .unwrap()
+      .then(() => {
+        alert("Pendaftaran berhasil!");
+        navigate("/login");
+      })
+      .catch((error) => {
+        alert("Pendaftaran gagal. Silakan coba lagi.");
+        console.error(error);
+      });
+  };
+
+  if (status === "loading") {
+    return <StatusLoading />;
+  }
 
   return (
     <>

@@ -2,13 +2,27 @@ import { useEffect, useState } from "react";
 import Input from "../Elements/Input/Index";
 import Label from "../Elements/Input/Label";
 import Card from "../Elements/Card";
-import { useAdminStore } from "../../stores/useAdminStore";
 import type { Product } from "../../services/types/product";
+import {
+  fetchProductsByUserId,
+  createProduct,
+  removeProduct,
+  editProduct,
+} from "../../stores/redux/slices/productSlice";
+import { useDispatch, useSelector } from "react-redux";
+import type { RootState, AppDispatch } from "../../stores/redux/store";
 
 const Admin = () => {
   if (!localStorage.getItem("isLogin")) {
     window.location.href = "/";
   }
+
+  const dispatch = useDispatch<AppDispatch>();
+  const {
+    items: products,
+    error,
+    status,
+  } = useSelector((state: RootState) => state.product);
 
   const initialState = {
     texttitle: "",
@@ -22,6 +36,7 @@ const Admin = () => {
     srcprofile: "",
     jobspan: "",
   };
+
   const [formData, setFormData] = useState(initialState);
   const [userName, setUserName] = useState("");
   const [edit, setEdit] = useState<number | null>(null);
@@ -43,27 +58,16 @@ const Admin = () => {
     setEdit(null);
   };
 
-  const {
-    addNewProduct,
-    fetchProductsByUserId,
-    deleteExistingProduct,
-    updateExistingProduct,
-    products: courses,
-  } = useAdminStore();
-
   //mengambil product dari api
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("user") || "{}");
     const userId = user.id;
     const userName = user.name;
     console.log("Data User: ", user);
-
-    if (userId) {
-      fetchProductsByUserId(userId);
-    }
+    if (status === "idle") dispatch(fetchProductsByUserId(userId));
 
     setUserName(userName);
-  }, [fetchProductsByUserId]);
+  }, [status, dispatch]);
 
   //menyimpan data product dan edit data product
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -88,8 +92,8 @@ const Admin = () => {
 
     // Generate ID
     const newId =
-      courses.length > 0
-        ? Math.max(...courses.map((c: Product) => c.id)) + 1
+      products.length > 0
+        ? Math.max(...products.map((c: Product) => c.id)) + 1
         : 1;
 
     if (edit) {
@@ -99,7 +103,8 @@ const Admin = () => {
         price: Number(formData.price),
         updatedAt: new Date(),
       };
-      updateExistingProduct(edit, updatedCourse);
+
+      dispatch(editProduct({ id: edit, product: updatedCourse }));
       alert("Course berhasil diubah.");
     } else {
       const newCourse: Product = {
@@ -110,7 +115,7 @@ const Admin = () => {
         ratingImages: 0,
         reviewcount: 0,
       };
-      addNewProduct(newCourse);
+      dispatch(createProduct(newCourse));
       alert("Course berhasil ditambahkan.");
     }
     //Reset form
@@ -119,7 +124,7 @@ const Admin = () => {
 
   const handleDelete = (id: number) => {
     if (confirm("Apakah Anda yakin ingin menghapus course ini?")) {
-      deleteExistingProduct(id);
+      dispatch(removeProduct(id));
       alert("Course berhasil dihapus.");
     }
   };
@@ -139,6 +144,14 @@ const Admin = () => {
       jobspan: course.jobspan,
     });
   };
+
+  if (error) {
+    return <p>Error: {error}</p>;
+  }
+
+  if (status === "loading") {
+    return <p>Loading...</p>;
+  }
 
   return (
     <main className="w-full max-w-7xl mx-auto p-4 sm:p-6 md:p-8 flex flex-col gap-8">
@@ -321,8 +334,8 @@ const Admin = () => {
           Daftar course yang telah ditambahkan.
         </p>
         <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-2">
-          {courses.length > 0 ? (
-            courses.map((courses: Product) => (
+          {products.length > 0 ? (
+            products.map((courses: Product) => (
               <div
                 key={courses.id}
                 className="flex flex-col gap-4  p-4 hover:bg-gray-100 hover:rounded-lg transition-colors duration-300 ease-in-out items-center rounded-lg bg-gray-50"

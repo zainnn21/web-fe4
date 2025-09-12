@@ -1,8 +1,8 @@
 import { useState, useMemo, useCallback } from "react";
-import type { ProductItem } from "./useProductFilter";
+import type { Product } from "../services/types/product";
 
 // Fungsi bantuan ini diperlukan untuk pengurutan.
-const getPriceValue = (price: string): number => {
+const getPriceValue = (price: string) => {
   if (price.toLowerCase().includes("gratis")) return 0;
   const regex = /(\d+)K/;
   const match = regex.exec(price);
@@ -15,12 +15,7 @@ const getRatingValue = (ratingDesc: string): number => {
   return match ? parseFloat(match[1]) : 0;
 };
 
-/**
- * Hook kustom untuk mengelola logika pencarian dan pengurutan.
- * @param {ProductItem[]} data - Array data yang akan diproses (biasanya sudah difilter).
- * @returns Objek yang berisi data yang telah diproses dan fungsi untuk mengelola state.
- */
-export const useSearchAndSort = (data: ProductItem[]) => {
+export const useSearchAndSort = (data: Product[]) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortOption, setSortOption] = useState("default");
 
@@ -39,12 +34,16 @@ export const useSearchAndSort = (data: ProductItem[]) => {
     switch (sortOption) {
       case "harga_terendah":
         sortedData.sort(
-          (a, b) => getPriceValue(a.price) - getPriceValue(b.price)
+          (a, b) =>
+            getPriceValue(a.price.toString()) -
+            getPriceValue(b.price.toString())
         );
         break;
       case "harga_tertinggi":
         sortedData.sort(
-          (a, b) => getPriceValue(b.price) - getPriceValue(a.price)
+          (a, b) =>
+            getPriceValue(b.price.toString()) -
+            getPriceValue(a.price.toString())
         );
         break;
       case "A to Z":
@@ -55,12 +54,16 @@ export const useSearchAndSort = (data: ProductItem[]) => {
         break;
       case "rating_tertinggi":
         sortedData.sort(
-          (a, b) => getRatingValue(b.ratingdesc) - getRatingValue(a.ratingdesc)
+          (a, b) =>
+            getRatingValue(b.ratingImages?.toString() ?? "") -
+            getRatingValue(a.ratingImages?.toString() ?? "")
         );
         break;
       case "rating_terendah":
         sortedData.sort(
-          (a, b) => getRatingValue(a.ratingdesc) - getRatingValue(b.ratingdesc)
+          (a, b) =>
+            getRatingValue(a.ratingImages?.toString() ?? "") -
+            getRatingValue(b.ratingImages?.toString() ?? "")
         );
         break;
       default:

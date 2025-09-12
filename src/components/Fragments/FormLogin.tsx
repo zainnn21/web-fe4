@@ -2,12 +2,22 @@ import InputForm from "../Elements/Input/Index";
 import Button from "../Elements/Button/index";
 import LineOr from "../Elements/LineOr/index";
 import FormTitle from "../Elements/TitleForm/index";
-import { Link, useNavigate  } from "react-router-dom";
-import {useLogin} from "../../hooks/useLogin"
+import { Link, useNavigate } from "react-router-dom";
+import { useLogin } from "../../hooks/useLogin";
+import StatusFailed from "../Elements/status/statusFailed";
+import StatusLoading from "../Elements/status/statusLoading";
 
 const FormLogin = () => {
   const navigate = useNavigate();
   const handleSubmit = useLogin();
+
+  if (status === "loading") {
+    return <StatusLoading />;
+  }
+
+  if (status === "failed") {
+    return <StatusFailed errorMessage={error} />;
+  }
 
   return (
     <>

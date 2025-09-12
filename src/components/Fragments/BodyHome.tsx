@@ -6,9 +6,14 @@ import Card from "../Elements/Card/index";
 import Button from "../Elements/Button";
 import Input from "../Elements/Input/Input";
 import TitleCollectionVideo from "../Elements/Card/titlecollectionvideo";
-import { getProduct } from "../../services/api/product.service";
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import type { Product } from "../../services/types/product";
+import { fetchProducts } from "../../stores/redux/slices/productSlice";
+import { useDispatch, useSelector } from "react-redux";
+import type { RootState, AppDispatch } from "../../stores/redux/store";
+import StatusFailed from "../Elements/status/statusFailed";
+import StatusLoading from "../Elements/status/statusLoading";
+
 
 const HeroSection = () => (
   <WideCard variant="topcard">
@@ -33,18 +38,25 @@ const HeroSection = () => (
 );
 
 const CourseSection = () => {
-  const [product, setProduct] = useState<Product[]>([]);
+  const dispatch = useDispatch<AppDispatch>();
+  const {
+    items: product,
+    status,
+    error,
+  } = useSelector((state: RootState) => state.product);
   useEffect(() => {
-    const fetchProdoct = async () => {
-      try {
-        const response = await getProduct();
-        setProduct(response);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-    fetchProdoct();
-  }, []);
+    if (status === "idle") {
+      dispatch(fetchProducts());
+    }
+  }, [dispatch, status]);
+
+  if (status === "loading") {
+    return <StatusLoading />;
+  }
+
+  if (status === "failed") {
+    return <StatusFailed errorMessage={error} />;
+  }
 
   return (
     <div className="flex flex-col md:gap-8 gap-6 md:w-300 w-80">

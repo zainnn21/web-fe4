@@ -1,6 +1,7 @@
 export interface User {
   email: string;
   password: string;
+  konfirmasiPassword: string;
   createdAt?: Date;
   updatedAt?: Date;
   avatar?: string;

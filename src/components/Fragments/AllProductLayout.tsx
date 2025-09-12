@@ -6,7 +6,11 @@ import ProductControls from "../Elements/Card/sortandsearchproduct";
 import { useEffect, useState } from "react";
 import { useProductFilter } from "../../hooks/useProductFilter";
 import { useSearchAndSort } from "../../hooks/useSearchAndSort";
-import { getProduct } from "../../services/api/product.service";
+import { fetchProducts } from "../../stores/redux/slices/productSlice";
+import { useDispatch, useSelector } from "react-redux";
+import type { RootState, AppDispatch } from "../../stores/redux/store";
+import StatusFailed from "../Elements/status/statusFailed";
+import StatusLoading from "../Elements/status/statusLoading";
 
 const CATEGORY_OPTIONS = [
   { value: "Pemasaran", label: "Pemasaran" },
@@ -28,15 +32,21 @@ const DURATION_OPTIONS = [
   { value: "LebihDari8jam", label: "Lebih Dari 8 Jam" },
 ];
 
-const Data = await getProduct();
 const AllProduct = () => {
+  const dispatch = useDispatch<AppDispatch>();
+  const {
+    items: product,
+    status,
+    error,
+  } = useSelector((state: RootState) => state.product);
+
   // 1. Filter berdasarkan checkbox
   const {
     filteredData: checkboxFilteredData,
     toggleFilter,
     resetFilters: resetCheckboxFilters,
     activeFilters,
-  } = useProductFilter(Data);
+  } = useProductFilter(product);
 
   // 2. Terapkan pencarian dan pengurutan pada data yang sudah difilter
   const {
@@ -59,8 +69,12 @@ const AllProduct = () => {
 
   // Atur ulang halaman ke 1 jika ada filter yang berubah
   useEffect(() => {
+    if (status === "idle") {
+      dispatch(fetchProducts());
+    }
+
     setCurrentPage(1);
-  }, [finalData]);
+  }, [finalData, status, dispatch]);
 
   // Logic Paginasi
   const itemsPerPage = 6;
@@ -69,6 +83,14 @@ const AllProduct = () => {
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
+
+  if (status === "loading") {
+    return <StatusLoading />;
+  }
+
+  if (status === "failed") {
+    return <StatusFailed errorMessage={error} />;
+  }
 
   return (
     <div className="flex flex-col px-7 md:px-30 py-5 md:py-16 md:gap-9 gap-6 items-center">
