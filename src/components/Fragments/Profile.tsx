@@ -13,6 +13,8 @@ import {
 } from "../../stores/redux/slices/userSlice";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState, AppDispatch } from "../../stores/redux/store";
+import StatusFailed from "../Elements/status/statusFailed";
+import StatusLoading from "../Elements/status/statusLoading";
 
 const Profile = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -41,10 +43,12 @@ const Profile = () => {
     console.log("ID User:", id);
   }, [status, id, dispatch]);
 
-  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) =>
+  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    console.log("Change Event:", event.target.name, event.target.value);
     dispatch(
       setProfileField({ field: event.target.name, value: event.target.value })
     );
+  };
 
   const handleCountryCodeChange = (
     event: React.ChangeEvent<HTMLSelectElement>
@@ -63,8 +67,21 @@ const Profile = () => {
       dispatch(deleteUserAccount(id));
   };
 
-  if (status === "loading") return <div>Loading...</div>;
-  if (status === "failed") return <div>Error: {error}</div>;
+  if (status === "loading") return <StatusLoading />;
+  if (status === "failed") return <StatusFailed errorMessage={error} />;
+
+  // Handle case kalau user array kosong di awal render.
+  if (!user || user.length === 0) {
+    return <StatusLoading />;
+  }
+
+  const currentUser = user[0];
+
+  console.log("Data user yang akan dirender:", currentUser);
+
+  if (!currentUser) {
+    return <StatusLoading />;
+  }
 
   return (
     <main className="px-5 py-7 gap-6 flex flex-col md:flex-row md:px-30 md:py-16 md:gap-9 md:justify-center">
@@ -99,8 +116,8 @@ const Profile = () => {
         <MyProfile
           imgSrc="/myprofile.png"
           imgAlt="profile"
-          name={user[0].name ?? ""}
-          email={user[0].email ?? ""}
+          name={currentUser.name ?? ""}
+          email={currentUser.email ?? ""}
           button="Ganti Foto Profil"
         />
 
@@ -108,34 +125,34 @@ const Profile = () => {
           <MyProfileForm
             label="Nama Lengkap"
             name="name"
-            value={user[0].name ?? ""}
+            value={currentUser.name ?? ""}
             onChange={handleInputChange}
           />
           <MyProfileForm
             label="E-Mail"
             name="email"
             type="email"
-            value={user[0].email ?? ""}
+            value={currentUser.email ?? ""}
             onChange={handleInputChange}
           />
           <MyProfileForm
             label="Password"
             name="password"
             type="password"
-            value={user[0].password ?? ""}
+            value={currentUser.password ?? ""}
             onChange={handleInputChange}
           />
         </div>
         <div className="flex flex-col gap-4 md:flex-row">
           <CountryCode
-            countryCode={user[0].countryCode ?? ""}
+            countryCode={currentUser.countryCode ?? ""}
             onChange={handleCountryCodeChange}
           />
           <MyProfileForm
             label=""
             name="phone"
             type="tel"
-            value={user[0].phone ?? Number(0)}
+            value={currentUser.phone ?? ""}
             onChange={handleInputChange}
           />
         </div>

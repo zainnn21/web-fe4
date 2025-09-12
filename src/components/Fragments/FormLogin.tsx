@@ -3,13 +3,35 @@ import Button from "../Elements/Button/index";
 import LineOr from "../Elements/LineOr/index";
 import FormTitle from "../Elements/TitleForm/index";
 import { Link, useNavigate } from "react-router-dom";
-import { useLogin } from "../../hooks/useLogin";
 import StatusFailed from "../Elements/status/statusFailed";
 import StatusLoading from "../Elements/status/statusLoading";
+import { useSelector, useDispatch } from "react-redux";
+import type { RootState, AppDispatch } from "../../stores/redux/store";
+import { login } from "../../stores/redux/slices/userSlice";
 
 const FormLogin = () => {
   const navigate = useNavigate();
-  const handleSubmit = useLogin();
+
+  const { status, error } = useSelector((state: RootState) => state.user);
+  const dispatch = useDispatch<AppDispatch>();
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const data = {
+      email: event.currentTarget.email.value,
+      password: event.currentTarget.password.value,
+    };
+    dispatch(login(data))
+      .unwrap()
+      .then(() => {
+        alert("Login berhasil!");
+        navigate("/");
+      })
+      .catch((error) => {
+        alert("Login gagal. Silakan coba lagi.");
+        console.log(error);
+      });
+  };
 
   if (status === "loading") {
     return <StatusLoading />;

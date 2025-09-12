@@ -4,21 +4,22 @@ import {
   registerUser,
   updateUser,
   deleteUser,
+  loginUser,
 } from "../../../services/api/auth.service";
-import type { User } from "../../../services/types/auth";
+import type { User, UserLogin } from "../../../services/types/auth";
 
 //async thunk untuk register
 export const registerNewUser = createAsyncThunk(
   "user/registerNewUser",
-  async (inputUser : User, thunkAPI) => {
+  async (inputUser: User, thunkAPI) => {
     if (
       !inputUser.name ||
       !inputUser.email ||
       !inputUser.gender ||
       !inputUser.phone ||
       !inputUser.password ||
-      !inputUser.countryCode
-      || !inputUser.konfirmasiPassword
+      !inputUser.countryCode ||
+      !inputUser.konfirmasiPassword
     ) {
       return thunkAPI.rejectWithValue("All fields are required");
     }
@@ -52,26 +53,44 @@ export const registerNewUser = createAsyncThunk(
   }
 );
 
+//async thunk untuk login
+export const login = createAsyncThunk(
+  "user/login",
+  async (data: UserLogin, thunkAPI) => {
+    const target = data;
+
+    if (!target.email || !target.password) {
+      return thunkAPI.rejectWithValue("All fields are required");
+    }
+
+    try {
+      const loggedInUser = await loginUser(data);
+      const token = "";
+      const user = loggedInUser;
+      const isLogin = true;
+      localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(user));
+      localStorage.setItem("isLogin", JSON.stringify(isLogin));
+      console.log(loggedInUser);
+      return loggedInUser;
+    } catch (error) {
+      console.log(error);
+      return thunkAPI.rejectWithValue(error);
+    }
+  }
+);
+
 //async thunk untuk fetching data
 export const fetchUser = createAsyncThunk(
   "user/fetchUser",
   async (id: string, thunkAPI) => {
     try {
       const response = await getUserById(id);
-      if (!response.ok) throw new Error("Failed to fetch user");
-      const data = await response.json();
-      return data;
+      return response;
     } catch (error) {
       console.log("Error fetching user: ", error);
       return thunkAPI.rejectWithValue(error);
     }
-  }
-);
-
-export const setProfileField = createAsyncThunk(
-  "user/setProfileField",
-  async ({ field, value }: { field: string; value: string }) => {
-    return { field, value };
   }
 );
 
@@ -81,10 +100,7 @@ export const updateUserProfile = createAsyncThunk(
     try {
       const profile = await getUserById(id);
       const response = await updateUser(id, profile);
-      const data = await response.json();
-      localStorage.setItem("user", JSON.stringify(response));
-      alert("Data berhasil diubah");
-      return data;
+      return response;
     } catch (error) {
       console.log(error);
       alert("Gagal memperbarui data user");
@@ -100,8 +116,6 @@ export const deleteUserAccount = createAsyncThunk(
       if (!confirm("Apakah anda yakin ingin menghapus akun?")) return;
       console.log(id);
       const response = await deleteUser(id);
-      if (!response.ok) throw new Error("Failed to delete user");
-      const data = await response.json();
 
       localStorage.removeItem("user");
       localStorage.removeItem("isLogin");
@@ -111,7 +125,7 @@ export const deleteUserAccount = createAsyncThunk(
       if (window.location.pathname === "/my-profile")
         window.location.href = "/";
 
-      return data;
+      return response;
     } catch (error) {
       console.log(error);
       alert("Gagal menghapus data user");
@@ -130,7 +144,17 @@ const initialState: { items: User[]; error: string; status: string } = {
 const userSlice = createSlice({
   name: "user",
   initialState,
-  reducers: {},
+  reducers: {
+    // Reducer untuk menangani perubahan pada setiap field di form profil
+    setProfileField: (
+      state,
+      action: { payload: { field: keyof User; value: string } }
+    ) => {
+      if (state.items.length > 0) {
+        state.items[0][action.payload.field] = action.payload.value;
+      }
+    },
+  },
   extraReducers: (builder) => {
     builder
       //fetch user
@@ -138,8 +162,9 @@ const userSlice = createSlice({
         state.status = "loading";
       })
       .addCase(fetchUser.fulfilled, (state, action) => {
+        console.log("Payload: ", action.payload);
         state.status = "succeeded";
-        state.items = action.payload;
+        state.items = [action.payload];
       })
       .addCase(fetchUser.rejected, (state, action) => {
         state.status = "failed";
@@ -152,7 +177,7 @@ const userSlice = createSlice({
       })
       .addCase(registerNewUser.fulfilled, (state, action) => {
         state.status = "succeeded";
-        state.items = action.payload;
+        state.items = [action.payload];
       })
       .addCase(registerNewUser.rejected, (state, action) => {
         state.status = "failed";
@@ -165,7 +190,7 @@ const userSlice = createSlice({
       })
       .addCase(updateUserProfile.fulfilled, (state, action) => {
         state.status = "succeeded";
-        state.items = action.payload;
+        state.items = [action.payload];
       })
       .addCase(updateUserProfile.rejected, (state, action) => {
         state.status = "failed";
@@ -176,15 +201,31 @@ const userSlice = createSlice({
       .addCase(deleteUserAccount.pending, (state) => {
         state.status = "loading";
       })
-      .addCase(deleteUserAccount.fulfilled, (state, action) => {
+      .addCase(deleteUserAccount.fulfilled, (state) => {
         state.status = "succeeded";
-        state.items = action.payload;
+        state.items = [];
       })
       .addCase(deleteUserAccount.rejected, (state, action) => {
         state.status = "failed";
         state.error = action.error.message || "Failed to delete user";
+      })
+
+      //login user
+      .addCase(login.pending, (state) => {
+        state.status = "loading";
+      })
+      .addCase(login.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        state.items = [action.payload];
+        state.error = "";
+      })
+      .addCase(login.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = (action.payload as Error).message || "Login failed";
       });
   },
 });
+
+export const { setProfileField } = userSlice.actions;
 
 export default userSlice.reducer;
