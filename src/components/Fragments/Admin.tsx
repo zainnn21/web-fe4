@@ -68,9 +68,8 @@ const Admin = () => {
     const userId = user.id;
     const userName = user.name;
     console.log("Data User: ", user);
-    if (id) {
-      if (status === "idle") dispatch(fetchProductsByUserId(userId));
-    }
+    if (status === "idle") dispatch(fetchProductsByUserId(userId));
+
     setUserName(userName);
   }, [status, dispatch, id]);
 
