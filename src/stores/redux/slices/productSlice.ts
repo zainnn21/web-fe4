@@ -27,6 +27,7 @@ export const fetchProductsByUserId = createAsyncThunk(
       const response = await getProductByUserId(creatorId);
       return response;
     } catch (error) {
+      if ((error as { status: number }).status === 404) return [];
       console.log("Error fetching products: ", error);
       return thunkAPI.rejectWithValue(error);
     }

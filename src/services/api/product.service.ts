@@ -12,7 +12,6 @@ export const getProduct = async () => {
 export const getProductByUserId = async (creatorId: number) => {
   const response = await apiClient.get(
     `${API_Products}?creatorId=${creatorId}`,
-    {}
   );
   return response.data;
 };

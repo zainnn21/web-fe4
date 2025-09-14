@@ -1,5 +1,4 @@
 import React from "react";
-import { Link } from "react-router-dom";
 
 interface CategoryProps {
   children: React.ReactNode;
@@ -8,12 +7,12 @@ interface CategoryProps {
 }
 const Category = ({ children, variant = "", To = "" }: CategoryProps) => {
   return (
-    <Link
-      to={To}
+    <a
+      href={To}
       className={`font-medium text-base leading-[140%] tracking-[0.2px] text-[#333333AD] hidden md:block cursor-pointer hover:text-[#3ECF4C] ${variant}`}
     >
       {children}
-    </Link>
+    </a>
   );
 };
 

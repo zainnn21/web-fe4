@@ -4,13 +4,16 @@ import Label from "../Elements/Input/Label";
 import Card from "../Elements/Card";
 import type { Product } from "../../services/types/product";
 import {
-  fetchProductsByUserId,
   createProduct,
   removeProduct,
   editProduct,
+  fetchProductsByUserId,
 } from "../../stores/redux/slices/productSlice";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState, AppDispatch } from "../../stores/redux/store";
+import StatusFailed from "../Elements/status/statusFailed";
+import StatusLoading from "../Elements/status/statusLoading";
+import { useParams } from "react-router-dom";
 
 const Admin = () => {
   if (!localStorage.getItem("isLogin")) {
@@ -18,6 +21,7 @@ const Admin = () => {
   }
 
   const dispatch = useDispatch<AppDispatch>();
+  const { id } = useParams();
   const {
     items: products,
     error,
@@ -64,10 +68,11 @@ const Admin = () => {
     const userId = user.id;
     const userName = user.name;
     console.log("Data User: ", user);
-    if (status === "idle") dispatch(fetchProductsByUserId(userId));
-
+    if (id) {
+      if (status === "idle") dispatch(fetchProductsByUserId(userId));
+    }
     setUserName(userName);
-  }, [status, dispatch]);
+  }, [status, dispatch, id]);
 
   //menyimpan data product dan edit data product
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -146,11 +151,11 @@ const Admin = () => {
   };
 
   if (error) {
-    return <p>Error: {error}</p>;
+    return <StatusFailed errorMessage={error} />;
   }
 
   if (status === "loading") {
-    return <p>Loading...</p>;
+    return <StatusLoading />;
   }
 
   return (
