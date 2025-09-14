@@ -15,11 +15,12 @@ import { useDispatch, useSelector } from "react-redux";
 import type { RootState, AppDispatch } from "../../stores/redux/store";
 import StatusFailed from "../Elements/status/statusFailed";
 import StatusLoading from "../Elements/status/statusLoading";
+import type { User } from "../../services/types/auth";
 
 const Profile = () => {
   const dispatch = useDispatch<AppDispatch>();
   const {
-    items: user,
+    items: currentUser,
     error,
     status,
   } = useSelector((state: RootState) => state.user);
@@ -36,17 +37,21 @@ const Profile = () => {
       return;
     }
 
+    console.log("cuurent user: ", currentUser);
+
     if (status === "idle") {
       dispatch(fetchUser(id));
     }
 
     console.log("ID User:", id);
-  }, [status, id, dispatch]);
+  }, [status, id, dispatch, currentUser]);
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    console.log("Change Event:", event.target.name, event.target.value);
     dispatch(
-      setProfileField({ field: event.target.name, value: event.target.value })
+      setProfileField({
+        field: event.target.name as keyof User,
+        value: event.target.value,
+      })
     );
   };
 
@@ -59,25 +64,39 @@ const Profile = () => {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    dispatch(updateUserProfile(id));
+    dispatch(updateUserProfile({ id, profile: currentUser[0] }))
+      .unwrap()
+      .then(() => {
+        alert("Profil berhasil diubah!");
+      })
+      .catch((error) => {
+        alert("Profil gagal diubah. Silakan coba lagi.");
+        console.log(error);
+      });
   };
 
   const handleDeleteAccount = () => {
     if (window.confirm("Apakah anda yakin ingin menghapus akun?"))
-      dispatch(deleteUserAccount(id));
+      dispatch(deleteUserAccount(id))
+        .unwrap()
+        .then(() => {
+          localStorage.removeItem("user");
+          localStorage.removeItem("isLogin");
+          window.location.href = "/";
+        })
+        .catch((error) => {
+          alert("Gagal menghapus akun. Silakan coba lagi.");
+          console.log(error);
+        });
   };
 
   if (status === "loading") return <StatusLoading />;
   if (status === "failed") return <StatusFailed errorMessage={error} />;
 
   // Handle case kalau user array kosong di awal render.
-  if (!user || user.length === 0) {
+  if (!currentUser || currentUser.length === 0) {
     return <StatusLoading />;
   }
-
-  const currentUser = user[0];
-
-  console.log("Data user yang akan dirender:", currentUser);
 
   if (!currentUser) {
     return <StatusLoading />;
@@ -109,70 +128,74 @@ const Profile = () => {
           />
         </div>
       </div>
-      <form
-        className="rounded-[10px] border p-6 flex flex-col gap-6 bg-white border-[#3A35411F]"
-        onSubmit={handleSubmit}
-      >
-        <MyProfile
-          imgSrc="/myprofile.png"
-          imgAlt="profile"
-          name={currentUser.name ?? ""}
-          email={currentUser.email ?? ""}
-          button="Ganti Foto Profil"
-        />
+      {currentUser.map((user: User) => (
+        <div key={user.id} className="flex flex-col gap-6">
+          <form
+            className="rounded-[10px] border p-6 flex flex-col gap-6 bg-white border-[#3A35411F]"
+            onSubmit={handleSubmit}
+          >
+            <MyProfile
+              imgSrc="/myprofile.png"
+              imgAlt="profile"
+              name={user.name ?? ""}
+              email={user.email ?? ""}
+              button="Ganti Foto Profil"
+            />
 
-        <div className="flex flex-col gap-4 md:flex-row">
-          <MyProfileForm
-            label="Nama Lengkap"
-            name="name"
-            value={currentUser.name ?? ""}
-            onChange={handleInputChange}
-          />
-          <MyProfileForm
-            label="E-Mail"
-            name="email"
-            type="email"
-            value={currentUser.email ?? ""}
-            onChange={handleInputChange}
-          />
-          <MyProfileForm
-            label="Password"
-            name="password"
-            type="password"
-            value={currentUser.password ?? ""}
-            onChange={handleInputChange}
-          />
-        </div>
-        <div className="flex flex-col gap-4 md:flex-row">
-          <CountryCode
-            countryCode={currentUser.countryCode ?? ""}
-            onChange={handleCountryCodeChange}
-          />
-          <MyProfileForm
-            label=""
-            name="phone"
-            type="tel"
-            value={currentUser.phone ?? ""}
-            onChange={handleInputChange}
-          />
-        </div>
+            <div className="flex flex-col gap-4 md:flex-row">
+              <MyProfileForm
+                label="Nama Lengkap"
+                name="name"
+                value={user.name ?? ""}
+                onChange={handleInputChange}
+              />
+              <MyProfileForm
+                label="E-Mail"
+                name="email"
+                type="email"
+                value={user.email ?? ""}
+                onChange={handleInputChange}
+              />
+              <MyProfileForm
+                label="Password"
+                name="password"
+                type="password"
+                value={user.password ?? ""}
+                onChange={handleInputChange}
+              />
+            </div>
+            <div className="flex flex-col gap-4 md:flex-row">
+              <CountryCode
+                countryCode={user.countryCode ?? ""}
+                onChange={handleCountryCodeChange}
+              />
+              <MyProfileForm
+                label=""
+                name="phone"
+                type="tel"
+                value={user.phone ?? ""}
+                onChange={handleInputChange}
+              />
+            </div>
 
-        <div className="flex justify-end gap-4">
-          <Button
-            label="Delete Account"
-            typeButton="button"
-            bg="bg-red-500"
-            textColor="text-white md:w-[140px]"
-            onClick={handleDeleteAccount}
-          ></Button>
-          <Button
-            label="Simpan"
-            typeButton="submit"
-            bg="bg-[#3ECF4C]"
-            textColor="text-white md:w-[112px]"
-          />
+            <div className="flex justify-end gap-4">
+              <Button
+                label="Delete Account"
+                typeButton="button"
+                bg="bg-red-500"
+                textColor="text-white md:w-[140px]"
+                onClick={handleDeleteAccount}
+              ></Button>
+              <Button
+                label="Simpan"
+                typeButton="submit"
+                bg="bg-[#3ECF4C]"
+                textColor="text-white md:w-[112px]"
+              />
+            </div>
+          </form>
         </div>
-      </form>
+      ))}
     </main>
   );
 };

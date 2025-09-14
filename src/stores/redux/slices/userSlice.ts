@@ -96,9 +96,8 @@ export const fetchUser = createAsyncThunk(
 
 export const updateUserProfile = createAsyncThunk(
   "user/updateUserProfile",
-  async (id: string, thunkAPI) => {
+  async ({ id, profile }: { id: string; profile: User }, thunkAPI) => {
     try {
-      const profile = await getUserById(id);
       const response = await updateUser(id, profile);
       return response;
     } catch (error) {
@@ -146,15 +145,16 @@ const userSlice = createSlice({
   initialState,
   reducers: {
     // Reducer untuk menangani perubahan pada setiap field di form profil
-    setProfileField: (
-      state,
-      action: { payload: { field: keyof User; value: string } }
+    setProfileField: <K extends keyof User>(
+      state: { items: User[] },
+      action: { payload: { field: K; value: User[K] } }
     ) => {
       if (state.items.length > 0) {
         state.items[0][action.payload.field] = action.payload.value;
       }
     },
   },
+
   extraReducers: (builder) => {
     builder
       //fetch user
